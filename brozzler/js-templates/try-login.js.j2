@@ -41,14 +41,34 @@ var __brzl_tryLogin = function() {
             passwordField.value = {{password|json}};
             console.log('submitting username=' + usernameField.value
                         + ' password=*** to detected login form');
-            try {
-                form.submit();
-            } catch (e) {
-                // "If a form control (such as a submit button) has a name or
-                // id of 'submit' it will mask the form's submit method." -MDN
-                // http://stackoverflow.com/a/2000021
-                var pseudoForm = document.createElement('form');
-                pseudoForm.submit.apply(form);
+            
+            // Try to find a submit button
+            var submitButton = null;
+            for (var k = 0; k < form.elements.length; k++) {
+                var elem = form.elements[k];
+                if (elem.type === 'submit' || elem.tagName === 'BUTTON') {
+                    submitButton = elem;
+                    break;
+                }
+            }
+            
+            // Use requestSubmit for proper form validation and navigation events
+            if (form.requestSubmit) {
+                form.requestSubmit(submitButton);
+            } else if (submitButton) {
+                // Fallback: click the button for older browsers
+                submitButton.click();
+            } else {
+                // Fallback: use form.submit() if no button and no requestSubmit
+                try {
+                    form.submit();
+                } catch (e) {
+                    // "If a form control (such as a submit button) has a name or
+                    // id of 'submit' it will mask the form's submit method." -MDN
+                    // http://stackoverflow.com/a/2000021
+                    var pseudoForm = document.createElement('form');
+                    pseudoForm.submit.apply(form);
+                }
             }
             __brzl_tryLoginState = 'submitted-form';
             return;
